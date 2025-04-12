@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"komari/config"
 	"komari/monitoring"
 	"log"
@@ -181,8 +182,14 @@ func uploadBasicInfo(endpoint string, token string) error {
 	}
 	defer resp.Body.Close()
 
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	message := string(body)
+
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("status code: %d", resp.StatusCode)
+		return fmt.Errorf("status code: %d,%s", resp.StatusCode, message)
 	}
 
 	return nil
@@ -229,13 +236,15 @@ func report(localConfig config.LocalConfig, remoteConfig config.RemoteConfig) []
 		}
 	}
 	if remoteConfig.Network {
-		networkUp, networkDown, err := monitoring.NetworkSpeed()
+		totalUp, totalDown, networkUp, networkDown, err := monitoring.NetworkSpeed(remoteConfig.Interval)
 		if err != nil {
 			message += fmt.Sprintf("failed to get network speed: %v\n", err)
 		}
 		data["network"] = map[string]interface{}{
-			"up":   networkUp,
-			"down": networkDown,
+			"up":        networkUp,
+			"down":      networkDown,
+			"totalUp":   totalUp,
+			"totalDown": totalDown,
 		}
 	}
 	if remoteConfig.Connections {
@@ -243,7 +252,7 @@ func report(localConfig config.LocalConfig, remoteConfig config.RemoteConfig) []
 		if err != nil {
 			message += fmt.Sprintf("failed to get connections: %v\n", err)
 		}
-		data["network"] = map[string]interface{}{
+		data["connections"] = map[string]interface{}{
 			"tcp": tcpCount,
 			"udp": udpCount,
 		}
@@ -254,6 +263,10 @@ func report(localConfig config.LocalConfig, remoteConfig config.RemoteConfig) []
 			message += fmt.Sprintf("failed to get uptime: %v\n", err)
 		}
 		data["uptime"] = uptime
+	}
+	if remoteConfig.Process {
+		processcount := monitoring.ProcessCount()
+		data["process"] = processcount
 	}
 	data["message"] = message
 

@@ -16,10 +16,10 @@ type RemoteConfig struct {
 	Swap        bool `json:"swap"`
 	Load        bool `json:"load"`
 	Uptime      bool `json:"uptime"`
-	Temperature bool `json:"temperature"`
+	Temperature bool `json:"temp"`
 	Os          bool `json:"os"`
 	Disk        bool `json:"disk"`
-	Network     bool `json:"network"`
+	Network     bool `json:"net"`
 	Process     bool `json:"process"`
 	Interval    int  `json:"interval"`
 	Connections bool `json:"connections"`
@@ -38,7 +38,7 @@ func LoadRemoteConfig(endpoint string, token string) (RemoteConfig, error) {
 	var err error
 
 	for attempt := 1; attempt <= maxRetry; attempt++ {
-		resp, err = http.Get(endpoint,)
+		resp, err = http.Get(endpoint)
 		if err == nil && resp.StatusCode == http.StatusOK {
 			break
 		}

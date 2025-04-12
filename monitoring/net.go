@@ -19,15 +19,20 @@ func ConnectionsCount() (tcpCount, udpCount int, err error) {
 	return len(tcps), len(udps), nil
 }
 
-func NetworkSpeed() (upSpeed, downSpeed float64, err error) {
+var (
+	lastUp   uint64
+	lastDown uint64
+)
+
+func NetworkSpeed(interval int) (totalUp, totalDown, upSpeed, downSpeed uint64, err error) {
 	// Get the network IO counters
 	ioCounters, err := net.IOCounters(false)
 	if err != nil {
-		return 0, 0, fmt.Errorf("failed to get network IO counters: %w", err)
+		return 0, 0, 0, 0, fmt.Errorf("failed to get network IO counters: %w", err)
 	}
 
 	if len(ioCounters) == 0 {
-		return 0, 0, fmt.Errorf("no network interfaces found")
+		return 0, 0, 0, 0, fmt.Errorf("no network interfaces found")
 	}
 
 	for _, interfaceStats := range ioCounters {
@@ -42,10 +47,14 @@ func NetworkSpeed() (upSpeed, downSpeed float64, err error) {
 		if isLoopback {
 			continue // Skip loopback interface
 		}
-		upSpeed += float64(interfaceStats.BytesSent) / float64(interfaceStats.PacketsSent)
-		downSpeed += float64(interfaceStats.BytesRecv) / float64(interfaceStats.PacketsRecv)
+		totalUp += interfaceStats.BytesSent
+		totalDown += interfaceStats.BytesRecv
 
 	}
+	upSpeed = (totalUp - lastUp) / uint64(interval)
+	downSpeed = (totalDown - lastDown) / uint64(interval)
 
-	return upSpeed, downSpeed, nil
+	lastUp = totalUp
+	lastDown = totalDown
+	return totalUp, totalDown, upSpeed, downSpeed, nil
 }
