@@ -36,7 +36,7 @@ func main() {
 		log.Fatalln("Failed to upload basic info:", err)
 	}
 
-	websocketEndpoint := strings.TrimSuffix(localConfig.Endpoint, "/") + "/ws/report"
+	websocketEndpoint := strings.TrimSuffix(localConfig.Endpoint, "/") + "/api/clients/report?token=" + localConfig.Token
 	websocketEndpoint = "ws" + strings.TrimPrefix(websocketEndpoint, "http")
 
 	var conn *websocket.Conn
@@ -130,7 +130,7 @@ func handleWebSocketMessages(localConfig config.LocalConfig, remoteConfig config
 }
 
 func reportWithPOST(endpoint string, data []byte) error {
-	url := strings.TrimSuffix(endpoint, "/") + "/api/report"
+	url := strings.TrimSuffix(endpoint, "/") + "/api/clients/report"
 	req, err := http.NewRequest("POST", url, strings.NewReader(string(data)))
 	if err != nil {
 		return err
@@ -163,7 +163,7 @@ func uploadBasicInfo(endpoint string, token string) error {
 		"os": osname,
 	}
 
-	endpoint = strings.TrimSuffix(endpoint, "/") + "/api/nodeBasicInfo"
+	endpoint = strings.TrimSuffix(endpoint, "/") + "/api/clients/uploadBasicInfo?token=" + token
 	payload, err := json.Marshal(data)
 	if err != nil {
 		return err

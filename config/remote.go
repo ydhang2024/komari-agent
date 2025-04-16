@@ -16,10 +16,10 @@ type RemoteConfig struct {
 	Swap        bool `json:"swap"`
 	Load        bool `json:"load"`
 	Uptime      bool `json:"uptime"`
-	Temperature bool `json:"temp"`
+	Temperature bool `json:"temperature"`
 	Os          bool `json:"os"`
 	Disk        bool `json:"disk"`
-	Network     bool `json:"net"`
+	Network     bool `json:"network"`
 	Process     bool `json:"process"`
 	Interval    int  `json:"interval"`
 	Connections bool `json:"connections"`
@@ -32,7 +32,7 @@ type RemoteConfig struct {
 // Request the remote configuration
 func LoadRemoteConfig(endpoint string, token string) (RemoteConfig, error) {
 	const maxRetry = 3
-	endpoint = strings.TrimSuffix(endpoint, "/") + "/api/getRemoteConfig" + "?token=" + token
+	endpoint = strings.TrimSuffix(endpoint, "/") + "/api/clients/getRemoteConfig" + "?token=" + token
 
 	var resp *http.Response
 	var err error
