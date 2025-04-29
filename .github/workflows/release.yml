@@ -47,19 +47,11 @@ jobs:
           go-version: '1.23'
 
       - name: Build
-        run: GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o ${{ matrix.artifact_name }} ./cmd/komari-agent
+        run: GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o ${{ matrix.artifact_name }} .
 
-      - name: Generate changelog
-        id: changelog
-        run: |
-          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
-          git log $(git describe --tags --abbrev=0)..HEAD --pretty=format:"- %s" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      - name: Upload release asset
+      - name: Upload Release Asset
         uses: softprops/action-gh-release@v1
         with:
           files: ${{ matrix.artifact_name }}
-          body: ${{ env.CHANGELOG }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
