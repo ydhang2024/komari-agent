@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: komari-agent-linux-amd64
+            goos: linux
+            goarch: amd64
+          - os: ubuntu-latest
+            artifact_name: komari-agent-linux-arm64
+            goos: linux
+            goarch: arm64
+          - os: windows-latest
+            artifact_name: komari-agent-windows-amd64.exe
+            goos: windows
+            goarch: amd64
+          - os: windows-latest
+            artifact_name: komari-agent-windows-arm64.exe
+            goos: windows
+            goarch: arm64
+          - os: macos-latest
+            artifact_name: komari-agent-darwin-amd64
+            goos: darwin
+            goarch: amd64
+          - os: macos-latest
+            artifact_name: komari-agent-darwin-arm64
+            goos: darwin
+            goarch: arm64
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+
+      - name: Build
+        run: GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o ${{ matrix.artifact_name }} ./cmd/komari-agent
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+          git log $(git describe --tags --abbrev=0)..HEAD --pretty=format:"- %s" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ matrix.artifact_name }}
+          body: ${{ env.CHANGELOG }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
