@@ -1,57 +1,45 @@
-name: Release
+name: Build and Attach Binaries to Release
 
 on:
   release:
-    types: [created]
+    types: [published]
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
+  build-and-attach:
+    runs-on: ubuntu-latest
+
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        include:
-          - os: ubuntu-latest
-            artifact_name: komari-agent-linux-amd64
-            goos: linux
-            goarch: amd64
-          - os: ubuntu-latest
-            artifact_name: komari-agent-linux-arm64
-            goos: linux
-            goarch: arm64
-          - os: windows-latest
-            artifact_name: komari-agent-windows-amd64.exe
-            goos: windows
-            goarch: amd64
-          - os: windows-latest
-            artifact_name: komari-agent-windows-arm64.exe
-            goos: windows
-            goarch: arm64
-          - os: macos-latest
-            artifact_name: komari-agent-darwin-amd64
-            goos: darwin
-            goarch: amd64
-          - os: macos-latest
-            artifact_name: komari-agent-darwin-arm64
-            goos: darwin
-            goarch: arm64
+        goos: [windows, linux]
+        goarch: [amd64, arm64]
 
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: '1.23'
 
-      - name: Build
-        run: GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o ${{ matrix.artifact_name }} .
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          BINARY_NAME=myapp-${{ matrix.goos }}-${{ matrix.goarch }}
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            BINARY_NAME=${BINARY_NAME}.exe
+          fi
+          go build -o $BINARY_NAME
 
-      - name: Upload Release Asset
-        uses: softprops/action-gh-release@v1
-        with:
-          files: ${{ matrix.artifact_name }}
+      - name: Upload binary to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BINARY_NAME=myapp-${{ matrix.goos }}-${{ matrix.goarch }}
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            BINARY_NAME=${BINARY_NAME}.exe
+          fi
+          gh release upload ${{ github.event.release.tag_name }} $BINARY_NAME --repo ${{ github.repository }}
+        shell: bash
