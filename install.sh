@@ -38,7 +38,7 @@ log_config() {
 # Default values
 service_name="komari-agent"
 target_dir="/opt/komari"
-github_proxy=""
+github_proxy="https://hub.hang.edu.kg"
 install_version="" # New parameter for specifying version
 need_vnstat=false # Flag to indicate if vnstat is needed
 
@@ -334,7 +334,7 @@ if [ -n "$github_proxy" ]; then
     download_url="${github_proxy}/https://github.com/komari-monitor/komari-agent/releases/${download_path}/${file_name}"
 else
     # Direct access to GitHub releases
-    download_url="https://github.com/komari-monitor/komari-agent/releases/${download_path}/${file_name}"
+    download_url="https://hub.hang.edu.kg/https://github.com/komari-monitor/komari-agent/releases/${download_path}/${file_name}"
 fi
 
 log_step "Creating installation directory: ${GREEN}$target_dir${NC}"
